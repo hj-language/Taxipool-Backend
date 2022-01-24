@@ -2,7 +2,12 @@
 Start: 2022.01.24 </br>
 End: -
 
-Taxipool-Frontend Git: -
+환경설정
+```
+$ npm init
+$ npm install express --save
+```
+</br>
 
 | Method | Path | Function | Implement |
 |--------|-------------|-----------------|---|
