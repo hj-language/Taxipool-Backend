@@ -1,7 +1,7 @@
 {
   "name": "taxipool",
   "version": "1.0.0",
-  "description": "",
+  "description": "Start: 2022.01.24 </br>\r End: -",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
