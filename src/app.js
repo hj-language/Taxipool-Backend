@@ -3,6 +3,8 @@ const app = express();
 
 let port = 3000;
 
+app.use(express.json());
+
 app.get('/', function(req, res) {
     res.send('Test Server');
 });
