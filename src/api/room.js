@@ -5,20 +5,40 @@ const dbConn = require('../conn.js').init();
 
 function checkWithDB(id) {
     let query = 'SELECT * FROM MEMBER WHERE id=?;';
-    return new Promise((res, rej) => {
+    return new Promise((resolve, reject) => {
         dbConn.query(query, [id], (err, rows) => {
             if (!err){  // DB 커넥션 성공
-                console.log("connect success");]
-                rows[0];
+                console.log(query, id, "connect success");
+                resolve(rows[0]);
             }
-            else
-                console.log(err);
+            console.log(err);
+            reject();
         })
     });
 }
 
+function insertIntoDB(query, items) {
+    return new Promise((resolve, reject) => {
+        dbConn.query(query, items, (err, rows) => {
+            if (!err) {
+                console.log(query, items, "connect success");
+                resolve();
+            }
+            console.log(err);
+            reject();
+        })
+    })
+}
+
 router.post('/rooms', (req, res, next) => {
-    // 처리
+    let room = req.body;
+    let query = "SELECT * FROM ROOMS;"
+    dbConn.query(query, (err, rows) => {
+        if (!err)
+        {
+            console.log(rows[0]);
+        }
+    })
 });
 
 // GET /room/update, GET /room/view

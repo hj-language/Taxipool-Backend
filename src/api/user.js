@@ -8,7 +8,7 @@ function checkWithDB(id) {
     return new Promise((res, rej) => {
         dbConn.query(query, [id], (err, rows) => {
             if (!err){  // DB 커넥션 성공
-                console.log("connect success");]
+                console.log("connect success");
                 rows[0];
             }
             else
