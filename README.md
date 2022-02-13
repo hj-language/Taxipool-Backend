@@ -9,7 +9,6 @@ Express, MySQL을 이용한 Taxipool 프로젝트 서버
 $ npm init
 $ npm install express --save
 $ npm install mysql
-```
 <서버 시작>
 ```
 $ node ./src/app.js
