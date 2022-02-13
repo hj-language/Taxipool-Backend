@@ -119,7 +119,7 @@ function deleteInDB(id, query) {
 }
 
 /* /user/signout */
-router.delete('/members', (req, res, next) => {
+router.delete ('/members', async (req, res, next) => {
 
     let query = 'DELETE FROM member WHERE id=?'
     let deleteMember = await deleteInDB(req.query.id, query);
