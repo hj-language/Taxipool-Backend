@@ -1,50 +1,47 @@
 const express = require('express');
 const router = express.Router();
 
-/* /room/create */
-router.post('/create', (req, res, next) => {
-    res.send("/room/create");
+const dbConn = require('../conn.js').init();
+
+function checkWithDB(id) {
+    let query = 'SELECT * FROM MEMBER WHERE id=?;';
+    return new Promise((res, rej) => {
+        dbConn.query(query, [id], (err, rows) => {
+            if (!err){  // DB 커넥션 성공
+                console.log("connect success");]
+                rows[0];
+            }
+            else
+                console.log(err);
+        })
+    });
+}
+
+router.post('/rooms', (req, res, next) => {
+    // 처리
 });
 
-/* /room/update(GET) */
-router.get('/update', (req, res, next) => {
-    res.send("/room/update(GET)");
+// GET /room/update, GET /room/view
+router.get('/rooms/:id', (req, res, next) => {
 });
 
-/* /room/update(PUT) */
-router.put('/update', (req, res, next) => {
-    res.send("/room/update(PUT)");
+router.put('/rooms/:id', (req, res, next) => {
+    /*
+        UPDATE: /api/rooms/1
+        RIDE IN/OUT: /api/rooms/1?isRide=true or false
+        query 이용하여 isRide 받기
+    */
 });
 
-
-/* /room/list */
-router.get('/list', (req, res, next) => {
-    res.send("/room/list");
+router.delete('/rooms/:id', (req, res, next) => {
 });
 
-/* /room/delete */
-router.delete('/delete', (req, res, next) => {
-    res.send("/room/delete");
-});
-
-/* /room/search */
-router.get('/search', (req, res, next) => {
-    res.send("/room/search");
-});
-
-/* /room/view */
-router.get('/view', (req, res, next) => {
-    res.send("/room/view");
-});
-
-/* /room/view/ridein */
-router.post('/view/ridein', (req, res, next) => {
-    res.send("/room/view/ridein");
-});
-
-/* /room/view/rideout */
-router.post('/view/rideout', (req, res, next) => {
-    res.send("/room/view/rideout");
+router.get('/rooms', (req, res, next) => {
+    /*
+        LIST: /api/rooms
+        SEARCH: /api/rooms?start-point="a"&end-point="b"
+        query 이용하여 start point, end point 받기
+    */
 });
 
 module.exports = router;
