@@ -47,7 +47,7 @@ router.get('/', (req, res, next) => {
     /*
         LIST: /api/rooms
         SEARCH: /api/rooms?start-point="a"&end-point="b"
-        query 이용하여 start point, end point 받기
+        query 이용하여 start point, end point 받기!!!!
     */
 });
 
