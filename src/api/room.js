@@ -93,8 +93,8 @@ router.put('/:id', (req, res, next) => {
     */
 });
 
-router.delete('/:id', (req, res, next) => {
-    if (await SendQuery("DELETE FROM room where roomid=?", req.params.id))
+router.delete('/:id', async (req, res, next) => {
+    if (await SendQuery("DELETE FROM room where roomid=?", req.params.id) != null)
         res.status(200);
     else
         res.status(400);
