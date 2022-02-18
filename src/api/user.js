@@ -2,9 +2,22 @@ const express = require('express');
 const router = express.Router();
 
 const dbConn = require('../conn.js').init();
+const jwt = require('jsonwebtoken');
+
+function verityToken(req, res, next) {
+    const bearerHeader = req.headers['authorization'];
+
+    if (bearerHeader) {
+      const bearerToken = bearerHeader.split(' ')[1];
+      return true;
+    }
+    else {
+      return false;
+    }
+}
 
 function checkWithDB(id) {
-    let query = 'SELECT * FROM MEMBER WHERE id=?;';
+    let query = 'SELECT * FROM MEMBER WHERE id=?';
     return new Promise((res, rej) => {
         dbConn.query(query, [id], (err, rows) => {
             if (!err){  // DB 커넥션 성공
@@ -20,10 +33,11 @@ function checkWithDB(id) {
 /* /user/login */
 router.post('/sessions', async (req, res, next) => {
 
-
     let check = await checkWithDB(req.body.id);
-
-    if (check) res.status(200);
+    let vToken = await verityToken(req, res, next);
+    if (check && vtoken) {
+      res.status(200);
+    }
     else  res.status(400);
 
 });
@@ -31,7 +45,6 @@ router.post('/sessions', async (req, res, next) => {
 /* /user/logout */
 router.delete('/sessions', async (req, res, next) => {
 
-    //토큰이 만료되지 않았으면 사용 못하도록 함
     let id = req.body.id;
     res.send("sessions");
 });
@@ -51,7 +64,6 @@ function insertInDB(body) {
   });
 }
 
-
 /* /user/signup */
 router.post('/members', async (req, res, next) => {
 
@@ -61,7 +73,7 @@ router.post('/members', async (req, res, next) => {
     else
       res.staus(400);
 
-    res.send("members");
+    res.send();
 
 });
 

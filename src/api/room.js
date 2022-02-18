@@ -47,7 +47,7 @@ function SendQuery(sql, obj) {
 router.get('/', async (req, res, next) => {
     /*
         LIST: /api/rooms
-        SEARCH: /api/rooms?start-point=a&end-point=b
+        SEARCH: /api/rooms?startPoint=a&endPoint=b
     */
    let startPoint = req.query.startPoint;
    let endPoint = req.query.endPoint;
@@ -92,7 +92,7 @@ router.get('/:id', async (req, res, next) => {
         /* 해당 id의 room이 존재하면 아래 넘겨주기
         leaderid, roomname, startpoint, endpoint, starttime, currentmember, totalmember, createtime, comments, isRide
         comments랑 isRide는 테이블 따로 만들고 거기에서 받아와야 함
-        내 생각엔 클라이언트의 유저 id를 req.body로 안 받고 query로 받아도 될 것 같음
+        내 생각엔 클라이언트의 유저 id는 토큰에서 얻기
         */
         res.status(200);
     }
