@@ -13,8 +13,7 @@ router.get('/test', async (req, res, next) => {
     function test(sql, obj) {
         return new Promise((res, rej) => {
             dbConn.query(sql, obj, (err, rows) => {
-                if (!err)
-                {
+                if (!err) {
                     console.log(rows);
                     res();
                 }
@@ -37,18 +36,35 @@ function SendQuery(sql, obj) {
                 console.log(sql, obj, "connect success");
                 resolve(rows);
             }
-            console.log(err);
-            reject(null);
+            else {
+                console.log(err, "ERROR");
+                resolve(null);
+            }
         })
     })
 }
 
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
     /*
         LIST: /api/rooms
-        SEARCH: /api/rooms?start-point="a"&end-point="b"
-        query 이용하여 start point, end point 받기!!!!
+        SEARCH: /api/rooms?start-point=a&end-point=b
     */
+   let startPoint = req.query.startPoint;
+   let endPoint = req.query.endPoint;
+   let rooms;
+   if (startPoint || endPoint) {            // SEARCH
+   }
+   else {                                   // LIST
+        rooms = await SendQuery("SELECT * from room", null);
+        if (rooms != null) { // 방이 없는 경우에도 성공
+            res.status(200);
+            res.send(rooms);
+        }
+        else {
+            res.status(400);
+            res.send();
+        }
+   }
 });
 
 router.post('/', async (req, res, next) => {
@@ -56,7 +72,7 @@ router.post('/', async (req, res, next) => {
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
-        starttime: req.body.starttime,
+        starttime: new Date(req.body.starttime),
         currentmember: req.body.currentmember,
         totalmember: req.body.totalmember,
         createtime: new Date()
@@ -94,7 +110,7 @@ router.put('/:id', (req, res, next) => {
 });
 
 router.delete('/:id', async (req, res, next) => {
-    if (await SendQuery("DELETE FROM room where roomid=?", req.params.id) != null)
+    if (await SendQuery("DELETE FROM room where roomno=?", req.params.id) != null)
         res.status(200);
     else
         res.status(400);
