@@ -29,10 +29,9 @@ router.post('/sessions', async (req, res, next) => {
 });
 
 /* /user/logout */
-router.delete('/sessions', (req, res, next) => {
+router.delete('/sessions', async (req, res, next) => {
 
     //토큰이 만료되지 않았으면 사용 못하도록 함
-    let token = req.body.token;
     let id = req.body.id;
     res.send("sessions");
 });
