@@ -1,11 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const dbConn = require('../conn.js').init();
 const jwt = require('jsonwebtoken');
 const auth = require('../middlewares/auth').checkToken;
-const SendQuery = require('./room.js').SendQuery;
-
+const SendQuery = require('../conn.js').SendQuery;
 
 /* /user/login */
 router.post('/', auth ,async (req, res, next) => {

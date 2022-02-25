@@ -1,48 +1,11 @@
 const express = require('express');
-const mysql = require('mysql');
 const router = express.Router();
-
-const dbConn = require('../conn.js').init();
+const SendQuery = require('../conn.js').SendQuery;
 
 /*
     - test path: http://localhost:3000/api/rooms/test
     - 토큰 검증 미들웨어 추가하기
 */
-
-router.get('/test', async (req, res, next) => {
-    function test(sql, obj) {
-        return new Promise((res, rej) => {
-            dbConn.query(sql, obj, (err, rows) => {
-                if (!err) {
-                    console.log(rows);
-                    res();
-                }
-                else {
-                    console.log(err);
-                    rej();
-                }
-            })
-        })
-    }
-    //await test("DELETE FROM room where roomname='myROOM'", []);
-    await test("SELECT * FROM room", []);
-    res.send("ok");
-});
-
-function SendQuery(sql, obj) {
-    return new Promise((resolve, reject) => {
-        dbConn.query(sql, obj, (err, rows) => {
-            if (!err) {
-                console.log(sql, obj, "connect success");
-                resolve(rows);
-            }
-            else {
-                console.log(err, "ERROR");
-                resolve(null);
-            }
-        })
-    })
-}
 
 router.get('/', async (req, res, next) => {
     /*
