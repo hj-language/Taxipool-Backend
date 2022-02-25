@@ -15,10 +15,29 @@ router.get('/', async (req, res, next) => {
    let startPoint = req.query.startPoint;
    let endPoint = req.query.endPoint;
    let rooms;
+   
    if (startPoint || endPoint) {            // SEARCH
+        if (startPoint && endPoint)
+            rooms = await SendQuery("SELECT * from room where startpoint=? and endpoint=? ;", [startPoint, endPoint]);
+        else if (startPoint)
+            rooms = await SendQuery("SELECT * from room where startpoint=? ;", startPoint);
+        else
+            rooms = await SendQuery("SELECT * from room where endpoint=? ;", endPoint);
+        
+        if (rooms != null) {
+            res.status(200);
+            res.send(rooms);
+        }
+        else {
+            res.status(400);
+            res.send();
+        }
    }
+   
    else {                                   // LIST
+        console.log(1);
         rooms = await SendQuery("SELECT * from room", null);
+        console.log(2);
         if (rooms != null) { // 방이 없는 경우에도 성공
             res.status(200);
             res.send(rooms);
