@@ -28,7 +28,6 @@ router.get('/', async (req, res, next) => {
         if (rooms != null)  // 방이 없는 경우에도 성공
             result = true;
    }
-
    else {                                   // LIST
         rooms = await SendQuery("SELECT * from room", null);
         if (rooms != null)
@@ -85,6 +84,16 @@ router.put('/:id', (req, res, next) => {
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
         query 이용하여 isRide 받기
     */
+
+    let isRide = req.query.isRide;
+   
+    if (isRide != undefined) {            // RIDE IN/OUT
+
+    }
+
+    else {
+
+    }
 });
 
 router.delete('/:id', async (req, res, next) => {
