@@ -48,7 +48,7 @@ router.post('/', async (req, res, next) => {
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
-        starttime: new Date(req.body.starttime),
+        starttime: req.body.starttime,
         currentmember: req.body.currentmember,
         totalmember: req.body.totalmember,
         createtime: new Date()
@@ -63,11 +63,6 @@ router.post('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
     let row = await SendQuery("SELECT * FROM room WHERE roomid=?", req.params.id);
     if (row) {
-        /* 해당 id의 room이 존재하면 아래 넘겨주기
-        leaderid, roomname, startpoint, endpoint, starttime, currentmember, totalmember, createtime, isRide
-        comments랑 isRide는 테이블 따로 만들고 거기에서 받아와야 함
-        내 생각엔 클라이언트의 유저 id는 토큰에서 얻기
-        */
         let roomObj = {
             leaderid: row[0].leaderid,
             roomname: row[0].roomname,
@@ -81,7 +76,7 @@ router.get('/:id', async (req, res, next) => {
         res.status(200);
         res.send({
             room: roomObj,
-            isRide: isRide
+            isRide: isRide // isRide 구하는 거 구현하기
         });
     }
     else {
@@ -89,21 +84,32 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-router.put('/:id', (req, res, next) => {
+router.put('/:id', async (req, res, next) => {
     /*
         UPDATE: /api/rooms/1
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
     */
-
     let isRide = req.query.isRide;
-    let roomNo = req.params.id;
+    let roomId = req.params.id;
    
     if (isRide != undefined) {            // RIDE IN/OUT
 
     }
 
-    else {                                // UPDDATE
-
+    else {                                // UPDATE
+        let roomObj = {
+            roomname: req.body.roomname,
+            startpoint: req.body.startpoint,
+            endpoint: req.body.endpoint,
+            starttime: req.body.starttime,
+            currentmember: req.body.currentmember,
+            totalmember: req.body.totalmember,
+            createtime: req.body.createtime
+        }
+        if (await SendQuery("UPDATE room SET ? WHERE roomid=?"), [roomObj, roomId])
+            res.status(200).end();
+        else
+            res.status(400).end();
     }
 });
 
