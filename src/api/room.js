@@ -99,7 +99,6 @@ router.put('/:id', async (req, res) => {
     let isRide = req.query.isRide;
     let roomNo = req.params.id;
     let userID = GetUserID(req.headers.authorization);
-    console.log(userID);
    
     if (isRide != undefined) {            // RIDE IN/OUT
         if (isRide) {                 // RIDE IN
