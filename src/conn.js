@@ -11,7 +11,7 @@ const init = () => {
     });
 };
 
-const dbConn = init();
+let dbConn = init();
 
 exports.SendQuery = (sql, obj) => {
     return new Promise((resolve, reject) => {
@@ -21,7 +21,8 @@ exports.SendQuery = (sql, obj) => {
                 resolve(rows);
             }
             else {
-                console.log(err, "ERROR");
+                console.log(err);
+                dbConn = init();
                 resolve(null);
             }
         });

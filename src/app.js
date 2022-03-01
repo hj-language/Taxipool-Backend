@@ -8,7 +8,9 @@ app.use(express.json());
 app.use(cors());
 
 app.get('/', function(req, res) {
-    res.send('Test Server');
+    res.send({
+        test: "TEST"
+    });
 });
 
 const router = require('./api/index.js');
