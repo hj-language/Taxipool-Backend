@@ -7,7 +7,7 @@ const SendQuery = require('../conn.js').SendQuery;
     - 토큰 검증 미들웨어 추가하기
 */
 
-router.get('/', async (req, res, next) => {
+router.get('/', async (req, res) => {
     /*
         LIST: /api/rooms
         SEARCH: /api/rooms?startPoint=a&endPoint=b
@@ -43,7 +43,7 @@ router.get('/', async (req, res, next) => {
    }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', async (req, res) => {
     let roomObj = {
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
@@ -60,7 +60,7 @@ router.post('/', async (req, res, next) => {
         res.status(400).end();
 });
 
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', async (req, res) => {
     let row = await SendQuery("SELECT * FROM room WHERE roomid=?", req.params.id);
     if (row) {
         let roomObj = {
@@ -84,7 +84,7 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
-router.put('/:id', async (req, res, next) => {
+router.put('/:id', async (req, res) => {
     /*
         UPDATE: /api/rooms/1
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
@@ -93,7 +93,12 @@ router.put('/:id', async (req, res, next) => {
     let roomId = req.params.id;
    
     if (isRide != undefined) {            // RIDE IN/OUT
+        if (isRide) {                 // RIDE IN
 
+        }
+        else {                        // RIDE OUT
+
+        }
     }
 
     else {                                // UPDATE
@@ -113,7 +118,7 @@ router.put('/:id', async (req, res, next) => {
     }
 });
 
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', async (req, res) => {
     if (await SendQuery("DELETE FROM room where roomno=?", req.params.id) != null)
         res.status(200).end();
     else
