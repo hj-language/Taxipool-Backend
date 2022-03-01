@@ -1,11 +1,15 @@
 const express = require('express');
+const decode = require('jwt-decode');
 const router = express.Router();
 const SendQuery = require('../conn.js').SendQuery;
 
 /*
-    - test path: http://localhost:3000/api/rooms/test
     - 토큰 검증 미들웨어 추가하기
 */
+
+function GetUserID(token) {
+    return decode(token).id;
+}
 
 router.get('/', async (req, res) => {
     /*
@@ -45,6 +49,7 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     let roomObj = {
+        leaderid: GetUserID(req.headers.authorization),
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
@@ -90,14 +95,22 @@ router.put('/:id', async (req, res) => {
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
     */
     let isRide = req.query.isRide;
-    let roomId = req.params.id;
+    let roomNo = req.params.id;
+    let userID = GetUserID(req.headers.authorization);
+    console.log(userID);
    
     if (isRide != undefined) {            // RIDE IN/OUT
         if (isRide) {                 // RIDE IN
-
+            if (await SendQuery("INSERT INTO room SET ?", [roomNo, userID]))
+                res.status(200).end();
+            else
+                res.status(400).end();
         }
         else {                        // RIDE OUT
-
+            if (await SendQuery("DELETE FROM room WHERE roomno=? AND userid=?", [roomNo, userID]))
+                res.status(200).end();
+            else
+                res.status(400).end();
         }
     }
 
@@ -111,7 +124,7 @@ router.put('/:id', async (req, res) => {
             totalmember: req.body.totalmember,
             createtime: req.body.createtime
         }
-        if (await SendQuery("UPDATE room SET ? WHERE roomid=?"), [roomObj, roomId])
+        if (await SendQuery("UPDATE room SET ? WHERE roomno=?"), [roomObj, roomNo])
             res.status(200).end();
         else
             res.status(400).end();
