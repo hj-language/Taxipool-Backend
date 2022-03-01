@@ -39,8 +39,7 @@ router.get('/', async (req, res, next) => {
        res.send(rooms);
    }
    else {
-       res.status(400);
-       res.send();
+       res.status(400).end();
    }
 });
 
@@ -56,25 +55,37 @@ router.post('/', async (req, res, next) => {
     }
 
     if (await SendQuery("INSERT INTO room SET ?", roomObj))
-        res.status(200);
+        res.status(200).end();
     else
-        res.status(400);
-
-    res.send();
+        res.status(400).end();
 });
 
 router.get('/:id', async (req, res, next) => {
     let row = await SendQuery("SELECT * FROM room WHERE roomid=?", req.params.id);
     if (row) {
         /* 해당 id의 room이 존재하면 아래 넘겨주기
-        leaderid, roomname, startpoint, endpoint, starttime, currentmember, totalmember, createtime, comments, isRide
+        leaderid, roomname, startpoint, endpoint, starttime, currentmember, totalmember, createtime, isRide
         comments랑 isRide는 테이블 따로 만들고 거기에서 받아와야 함
         내 생각엔 클라이언트의 유저 id는 토큰에서 얻기
         */
+        let roomObj = {
+            leaderid: row[0].leaderid,
+            roomname: row[0].roomname,
+            startpoint: row[0].startpoint,
+            endpoint: row[0].endpoint,
+            starttime: row[0].starttime,
+            currentmember: row[0].currentmember,
+            totalmember: row[0].totalmember,
+            createtime: row[0].createtime,
+        };
         res.status(200);
+        res.send({
+            room: roomObj,
+            isRide: isRide
+        });
     }
     else {
-        res.status(400);
+        res.status(400).end();
     }
 });
 
@@ -82,26 +93,25 @@ router.put('/:id', (req, res, next) => {
     /*
         UPDATE: /api/rooms/1
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
-        query 이용하여 isRide 받기
     */
 
     let isRide = req.query.isRide;
+    let roomNo = req.params.id;
    
     if (isRide != undefined) {            // RIDE IN/OUT
 
     }
 
-    else {
+    else {                                // UPDDATE
 
     }
 });
 
 router.delete('/:id', async (req, res, next) => {
     if (await SendQuery("DELETE FROM room where roomno=?", req.params.id) != null)
-        res.status(200);
+        res.status(200).end();
     else
-        res.status(400);
-    res.send();
+        res.status(400).end();
 });
 
 module.exports = router;
