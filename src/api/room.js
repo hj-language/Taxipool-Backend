@@ -5,6 +5,8 @@ const SendQuery = require('../conn.js').SendQuery;
 
 /*
     - 토큰 검증 미들웨어 추가하기
+    - isRide 구하기: 요청 token으로부터 id를 추출하여 
+                    rideinfo 테이블의 roomno에 해당 userid가 있는 지 확인
 */
 
 function GetUserID(token) {
@@ -81,7 +83,7 @@ router.get('/:id', async (req, res) => {
         res.status(200);
         res.send({
             room: roomObj,
-            isRide: isRide // isRide 구하는 거 구현하기
+            isRide: isRide
         });
     }
     else {
