@@ -23,11 +23,8 @@ router.post('/', auth ,async (req, res, next) => {
 /* /user/logout */
 router.delete('/sessions', async (req, res, next) => {
 
-    //세션 만료됐는지 확인하고
-    //만료됐으면 성공
-    //아직 유효하면?
-
     let id = req.body.id;
+    
     res.send();
 });
 
@@ -52,56 +49,42 @@ router.post('/member', async (req, res, next) => {
 
 });
 
-
-
-/* /user/signup/checkid */
-// router.get('/members', async (req, res, next) => {
-//
-//     let query = 'SELECT id FROM member WHERE id=?';
-//     let checkId = await
-//     if (checkId)
-//       res.status(200);
-//     else res.status(400);
-//
-//     res.send();
-// });
-
-/* /user/signup/checknickname */
+//id, nickname 중복확인
 router.get('/members', async (req, res, next) => {
 
     let query = 'SELECT nickname FROM member WHERE nickname=?';
     let checkNick = await selectInDB(req.query.nickname, query);
-    if (checkNick)
-      res.status(200);
-    else
-      res.status(400);
 
+    if (req.query.nickname != null) {
+      if (await SendQuery('SELECT nickname FROM member WHERE nickname=?', [req.query.nickname])) {
+        res.status(200);
+      }
+      else {
+        res.status(400);
+      }
+      res.send(members);
+    }
+    else {
+      if (await SendQuery('SELECT id FROM member WHERE id=?', [req.query.nickname])) {
+        res.status(200);
+      }
+      else {
+        res.status(400);
+      }
+    }
+   
     res.send();
 });
-
-function deleteInDB(id, query) {
-  let checkDelete = false;
-  return new Promise((res, rej) => {
-    conn.query(query, [id], function(err, rows, fields) {
-      if (err)
-        console.log(err);
-      else {
-        console.log('delete success');
-        checkDelete = true;
-      }
-    })
-  });
-}
 
 /* /user/signout */
 router.delete ('/members', async (req, res, next) => {
 
-    let query = 'DELETE FROM member WHERE id=?'
-    let deleteMember = await deleteInDB(req.query.id, query);
-    if (checkDelete)
+    if (await SendQuery('DELETE FROM member WHERE id=?', [req.query.id])) {
       req.status(200);
-    else
+    }
+    else {
       req.status(400);
+    }
 
     res.send();
 });
