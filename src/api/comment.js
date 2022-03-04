@@ -1,19 +1,27 @@
 const express = require('express');
 const router = express.Router();
 const SendQuery = require('../conn.js').SendQuery;
+const GetUserID = require('./jwt.js').GetUserID;
 
-router.get('/:id', async (req, res, next) => {
-    let row = await SendQuery("SELECT * FROM rideinfo WHERE roomno=?", req.params.id);
-    if (row != null) {
-        let result = new Array();
-        for (let item in row)
-            result.push(item.userid);
-        res.status(200);
-        res.send(result);
-    }
-    else {
-        res.status(400).end();
-    }
-})
+router.get('/:roomno', async (req, res) => {
+    let comments = await SendQuery("SELECT * FROM comment WHERE roomno=?", req.params.roomno);
+    res.status(comments != null ? 200 : 400).send(comments);
+});
+
+router.post('/:roomno', async (req, res) => {
+    let commentObj = {
+        roomno: req.params.roomno,
+        user: GetUserID(req.headers.authorization),
+        writetime: new Date(),
+        text: req.body.text
+    };
+    res.status(await SendQuery("INSERT INTO comment SET ?", commentObj) ? 200 : 400).end();
+});
+
+router.delete('/:commentno', async (req, res) => {
+    res.status(
+        await SendQuery("DELETE FROM comment where commentno=?", req.params.commentno) != null ? 200 : 400
+    ).end();
+});
 
 module.exports = router;
