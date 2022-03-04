@@ -99,6 +99,11 @@ router.put('/:roomno', async (req, res) => {
                 user: userID,
                 ridetime: new Date()
             };
+            let roomInfo = await SendQuery("SELECT currentmember, totalmember FROM room WHERE roomno=?");
+            if (roomInfo == null || roomInfo[0].currentmember >= totalmember) {
+                // 해당 방이 없거나, 인원이 초과될 경우 방지
+                res.status(400).end();
+            }
             res.status(await SendQuery("INSERT INTO roominfo SET ?", roomInfoObj) ? 200 : 400).end();
         }
         else {                            // RIDE OUT
