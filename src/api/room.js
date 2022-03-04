@@ -5,8 +5,6 @@ const SendQuery = require('../conn.js').SendQuery;
 
 /*
     - 토큰 검증 미들웨어 추가하기
-    - isRide 구하기: 요청 token으로부터 id를 추출하여 
-                    rideinfo 테이블의 roomno에 해당 userid가 있는 지 확인
 */
 
 function GetUserID(token) {
@@ -14,9 +12,7 @@ function GetUserID(token) {
 }
 
 async function IsRide(roomno, id) {
-    if (await SendQuery("SELECT * from roominfo where roomno=? AND user=?", [roomno, id]))
-        return true;
-    return false;
+    return (await SendQuery("SELECT * from roominfo where roomno=? AND user=?", [roomno, id])).length != 0 ? true : false;
 }
 
 router.get('/', async (req, res) => {
@@ -26,7 +22,7 @@ router.get('/', async (req, res) => {
     */
    let startPoint = req.query.startPoint;
    let endPoint = req.query.endPoint;
-   console.log(req.body);
+   
    let rooms;
    let result = false;
 
@@ -78,7 +74,7 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     let roomNo = req.params.id;
     let row = await SendQuery("SELECT * FROM room WHERE roomno=?", roomNo);
-    if (row) {
+    if (row.length != 0) {
         let roomObj = {
             leaderid: row[0].leaderid,
             roomname: row[0].roomname,
@@ -92,8 +88,7 @@ router.get('/:id', async (req, res) => {
         res.status(200);
         res.send({
             room: roomObj,
-            // isRide: IsRide(req.body.id, roomNo)
-            isRide: IsRide(roomNo, GetUserID(req.headers.authorization))
+            isRide: await IsRide(roomNo, GetUserID(req.headers.authorization))
         });
     }
     else {
