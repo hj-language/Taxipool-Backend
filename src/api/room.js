@@ -8,6 +8,33 @@ async function IsRide(roomno, id) {
     return (await SendQuery("SELECT * from roominfo where roomno=? AND user=?", [roomno, id])).length != 0 ? true : false;
 }
 
+async function DeleteRoom(roomno) {
+    return await SendQuery("DELETE FROM room where roomno=?", roomno) != null;
+}
+
+async function RideOut(roomno, id, alterid) {
+    await pool.getConnection(async (err, conn) => {
+        try {
+            await conn.beginTransaction();
+            
+            // alterid가 defined면 해당 방의 leaderid를 alterid로 변경
+            if (alterid != undefined)
+                await conn.query("UPDATE room SET leaderid=? WHERE roomno=?;", [alterid, roomno]);
+            
+            await conn.query("DELETE FROM roominfo WHERE roomno=? AND user=?;", [roomno, id]);
+            await conn.query("UPDATE room SET currentmember=currentmember-1 WHERE roomno=?", roomno);
+            await conn.commit();
+        } catch (err) {
+            console.log(err);
+            await conn.rollback();
+            return false;
+        } finally {
+            conn.release();
+            return true;
+        }
+    });
+}
+
 router.get('/', async (req, res) => {
     /*
         LIST: /api/rooms
@@ -55,8 +82,23 @@ router.post('/', async (req, res) => {
         currentmember: req.body.currentmember,
         totalmember: req.body.totalmember,
         createtime: new Date()
-    }
-    res.status(await SendQuery("INSERT INTO room SET ?", roomObj) ? 200 : 400).end();
+    };
+    await pool.getConnection(async (err, conn) => {
+        try {
+            await conn.beginTransaction();
+            await conn.query("INSERT INTO room SET ?", roomObj, async (err, res) => {
+                await conn.query("INSERT INTO roominfo VALUES (?, ?, ?)", [res.insertId, roomObj.leaderid, new Date()]);
+            });
+            await conn.commit();
+        } catch (err) {
+            console.log(err);
+            await conn.rollback();
+            return res.status(400).end();
+        } finally {
+            conn.release();
+            return res.status(200).end();
+        }
+    });
 });
 
 router.get('/:roomno', async (req, res) => {
@@ -103,12 +145,12 @@ router.put('/:roomno', async (req, res) => {
             let roomInfo = await SendQuery("SELECT currentmember, totalmember FROM room WHERE roomno=?", roomNo);
 
             // 해당 방이 없거나, 인원이 초과될 경우 방지
-            if (roomInfo == null || roomInfo[0].currentmember >= roomInfo[0].totalmember)
+            if (roomInfo == null || roomInfo.length == 0 || roomInfo[0].currentmember >= roomInfo[0].totalmember)
                 return res.status(400).end();
-                
+
             await pool.getConnection(async (err, conn) => {
                 try {
-                    await conn.beginTransaction();
+                    await conn.beginTransaction(); // 트랜잭션으로 roomInfo에 유저 추가 + room에 인원 증가 처리
                     await conn.query("INSERT INTO roominfo SET ?", roomInfoObj);
                     await conn.query("UPDATE room SET currentmember=currentmember+1 WHERE roomno=?", roomNo);
                     await conn.commit();
@@ -123,7 +165,21 @@ router.put('/:roomno', async (req, res) => {
             });
         }
         else {                            // RIDE OUT
-            res.status(await SendQuery("DELETE FROM roominfo WHERE roomno=? AND user=?", [roomNo, userID]) ? 200 : 400).end();
+            let roomInfo = await SendQuery("SELECT leaderid, currentmember FROM room WHERE roomno=?", roomNo);
+            if (roomInfo == null || roomInfo.length == 0 || roomInfo[0].currentmember <= 0)
+                return res.status(400).end();
+
+            // 1명 남은 상황이면 방 삭제
+            if (roomInfo[0].currentmember == 1)
+                return res.status(DeleteRoom(roomNo) ? 200 : 400).end();
+            
+            // 방장이 내리는 상황이면 가장 빨리 탄 사람에게 방장 넘겨주기
+            if (roomInfo[0].leaderid == userID) {
+                let users = await SendQuery("SELECT user FROM roominfo WHERE roomno=? ORDER BY ridetime ASC;", roomNo);
+                return res.status(RideOut(roomNo, userID, users[0].user) ? 200 : 400).end();
+            }
+            
+            res.status(RideOut(roomNo, userID) ? 200 : 400).end();
         }
     }
 
@@ -138,7 +194,7 @@ router.put('/:roomno', async (req, res) => {
 });
 
 router.delete('/:roomno', async (req, res) => {
-    res.status(await SendQuery("DELETE FROM room where roomno=?", req.params.roomno) != null ? 200 : 400).end();
+    res.status(DeleteRoom(req.params.roomno) ? 200 : 400).end();
 });
 
 module.exports = router;
