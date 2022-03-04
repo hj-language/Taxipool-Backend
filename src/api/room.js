@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const SendQuery = require('../conn.js').SendQuery;
 const GetUserID = require('./jwt.js').GetUserID;
+const pool = require('../conn.js').pool;
 
 async function IsRide(roomno, id) {
     return (await SendQuery("SELECT * from roominfo where roomno=? AND user=?", [roomno, id])).length != 0 ? true : false;
@@ -99,12 +100,27 @@ router.put('/:roomno', async (req, res) => {
                 user: userID,
                 ridetime: new Date()
             };
-            let roomInfo = await SendQuery("SELECT currentmember, totalmember FROM room WHERE roomno=?");
-            if (roomInfo == null || roomInfo[0].currentmember >= totalmember) {
-                // 해당 방이 없거나, 인원이 초과될 경우 방지
-                res.status(400).end();
-            }
-            res.status(await SendQuery("INSERT INTO roominfo SET ?", roomInfoObj) ? 200 : 400).end();
+            let roomInfo = await SendQuery("SELECT currentmember, totalmember FROM room WHERE roomno=?", roomNo);
+
+            // 해당 방이 없거나, 인원이 초과될 경우 방지
+            if (roomInfo == null || roomInfo[0].currentmember >= roomInfo[0].totalmember)
+                return res.status(400).end();
+                
+            await pool.getConnection(async (err, conn) => {
+                try {
+                    await conn.beginTransaction();
+                    await conn.query("INSERT INTO roominfo SET ?", roomInfoObj);
+                    await conn.query("UPDATE room SET currentmember=currentmember+1 WHERE roomno=?", roomNo);
+                    await conn.commit();
+                } catch (err) {
+                    console.log(err);
+                    await conn.rollback();
+                    return res.status(400).end();
+                } finally {
+                    conn.release();
+                    return res.status(200).end();
+                }
+            });
         }
         else {                            // RIDE OUT
             res.status(await SendQuery("DELETE FROM roominfo WHERE roomno=? AND user=?", [roomNo, userID]) ? 200 : 400).end();

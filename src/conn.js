@@ -28,3 +28,12 @@ exports.SendQuery = (sql, obj) => {
         });
     });
 };
+
+exports.pool = mysql.createPool({
+    host: dbInfo.host,
+    user: dbInfo.user,
+    password: dbInfo.password,
+    database: dbInfo.database,
+    port: dbInfo.port,
+    connectionLimit: 5
+});
