@@ -55,11 +55,7 @@ router.post('/', async (req, res) => {
         totalmember: req.body.totalmember,
         createtime: new Date()
     }
-
-    if (await SendQuery("INSERT INTO room SET ?", roomObj))
-        res.status(200).end();
-    else
-        res.status(400).end();
+    res.status(await SendQuery("INSERT INTO room SET ?", roomObj) ? 200 : 400).end();
 });
 
 router.get('/:roomno', async (req, res) => {
@@ -103,16 +99,10 @@ router.put('/:roomno', async (req, res) => {
                 user: userID,
                 ridetime: new Date()
             };
-            if (await SendQuery("INSERT INTO roominfo SET ?", roomInfoObj))
-                res.status(200).end();
-            else
-                res.status(400).end();
+            res.status(await SendQuery("INSERT INTO roominfo SET ?", roomInfoObj) ? 200 : 400).end();
         }
         else {                            // RIDE OUT
-            if (await SendQuery("DELETE FROM roominfo WHERE roomno=? AND user=?", [roomNo, userID]))
-                res.status(200).end();
-            else
-                res.status(400).end();
+            res.status(await SendQuery("DELETE FROM roominfo WHERE roomno=? AND user=?", [roomNo, userID]) ? 200 : 400).end();
         }
     }
 
@@ -120,18 +110,14 @@ router.put('/:roomno', async (req, res) => {
         let query = "UPDATE room SET "
             + "roomname=?, startpoint=?, endpoint=?, starttime=?, currentmember=?, totalmember=? " 
             + "where roomno=?";
-        if (await SendQuery(query, [req.body.roomname, req.body.startpoint, req.body.endpoint, req.body.starttime, req.body.currentmember, req.body.totalmember, roomNo]))
-            res.status(200).end();
-        else
-            res.status(400).end();
+        res.status(await SendQuery(
+            query, [req.body.roomname, req.body.startpoint, req.body.endpoint, req.body.starttime, req.body.currentmember, req.body.totalmember, roomNo]
+        ) ? 200 : 400).end();
     }
 });
 
 router.delete('/:roomno', async (req, res) => {
-    if (await SendQuery("DELETE FROM room where roomno=?", req.params.roomno) != null)
-        res.status(200).end();
-    else
-        res.status(400).end();
+    res.status(await SendQuery("DELETE FROM room where roomno=?", req.params.roomno) != null ? 200 : 400).end();
 });
 
 module.exports = router;
