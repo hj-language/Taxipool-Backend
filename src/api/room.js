@@ -13,6 +13,12 @@ function GetUserID(token) {
     return decode(token).id;
 }
 
+async function IsRide(roomno, id) {
+    if (await SendQuery("SELECT * from roominfo where roomno=? AND user=?", [roomno, id]))
+        return true;
+    return false;
+}
+
 router.get('/', async (req, res) => {
     /*
         LIST: /api/rooms
@@ -20,16 +26,17 @@ router.get('/', async (req, res) => {
     */
    let startPoint = req.query.startPoint;
    let endPoint = req.query.endPoint;
+   console.log(req.body);
    let rooms;
    let result = false;
 
    if (startPoint || endPoint) {            // SEARCH
         if (startPoint && endPoint)
-            rooms = await SendQuery("SELECT * from room where startpoint=? and endpoint=? ;", [startPoint, endPoint]);
+            rooms = await SendQuery("SELECT * from room where startpoint=? and endpoint=?;", [startPoint, endPoint]);
         else if (startPoint)
-            rooms = await SendQuery("SELECT * from room where startpoint=? ;", startPoint);
+            rooms = await SendQuery("SELECT * from room where startpoint=?;", startPoint);
         else
-            rooms = await SendQuery("SELECT * from room where endpoint=? ;", endPoint);
+            rooms = await SendQuery("SELECT * from room where endpoint=?;", endPoint);
         
         if (rooms != null)  // 방이 없는 경우에도 성공
             result = true;
@@ -52,6 +59,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     let roomObj = {
         leaderid: GetUserID(req.headers.authorization),
+        leaderid: req.body.id,
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
@@ -68,7 +76,8 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-    let row = await SendQuery("SELECT * FROM room WHERE roomid=?", req.params.id);
+    let roomNo = req.params.id;
+    let row = await SendQuery("SELECT * FROM room WHERE roomno=?", roomNo);
     if (row) {
         let roomObj = {
             leaderid: row[0].leaderid,
@@ -83,7 +92,8 @@ router.get('/:id', async (req, res) => {
         res.status(200);
         res.send({
             room: roomObj,
-            isRide: isRide
+            // isRide: IsRide(req.body.id, roomNo)
+            isRide: IsRide(roomNo, GetUserID(req.headers.authorization))
         });
     }
     else {
@@ -101,14 +111,19 @@ router.put('/:id', async (req, res) => {
     let userID = GetUserID(req.headers.authorization);
    
     if (isRide != undefined) {            // RIDE IN/OUT
-        if (isRide) {                 // RIDE IN
-            if (await SendQuery("INSERT INTO room SET ?", [roomNo, userID]))
+        if (isRide === "true") {          // RIDE IN
+            let roomInfoObj = {
+                roomno: roomNo,
+                user: userID,
+                ridetime: new Date()
+            };
+            if (await SendQuery("INSERT INTO roominfo SET ?", roomInfoObj))
                 res.status(200).end();
             else
                 res.status(400).end();
         }
-        else {                        // RIDE OUT
-            if (await SendQuery("DELETE FROM room WHERE roomno=? AND userid=?", [roomNo, userID]))
+        else {                            // RIDE OUT
+            if (await SendQuery("DELETE FROM roominfo WHERE roomno=? AND user=?", [roomNo, userID]))
                 res.status(200).end();
             else
                 res.status(400).end();
@@ -116,16 +131,10 @@ router.put('/:id', async (req, res) => {
     }
 
     else {                                // UPDATE
-        let roomObj = {
-            roomname: req.body.roomname,
-            startpoint: req.body.startpoint,
-            endpoint: req.body.endpoint,
-            starttime: req.body.starttime,
-            currentmember: req.body.currentmember,
-            totalmember: req.body.totalmember,
-            createtime: req.body.createtime
-        }
-        if (await SendQuery("UPDATE room SET ? WHERE roomno=?"), [roomObj, roomNo])
+        let query = "UPDATE room SET "
+            + "roomname=?, startpoint=?, endpoint=?, starttime=?, currentmember=?, totalmember=? " 
+            + "where roomno=?";
+        if (await SendQuery(query, [req.body.roomname, req.body.startpoint, req.body.endpoint, req.body.starttime, req.body.currentmember, req.body.totalmember, roomNo]))
             res.status(200).end();
         else
             res.status(400).end();
