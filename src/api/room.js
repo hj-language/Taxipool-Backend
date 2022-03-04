@@ -1,15 +1,7 @@
 const express = require('express');
-const decode = require('jwt-decode');
 const router = express.Router();
 const SendQuery = require('../conn.js').SendQuery;
-
-/*
-    - 토큰 검증 미들웨어 추가하기
-*/
-
-function GetUserID(token) {
-    return decode(token).id;
-}
+const GetUserID = require('./jwt.js').GetUserID;
 
 async function IsRide(roomno, id) {
     return (await SendQuery("SELECT * from roominfo where roomno=? AND user=?", [roomno, id])).length != 0 ? true : false;
@@ -55,7 +47,6 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
     let roomObj = {
         leaderid: GetUserID(req.headers.authorization),
-        leaderid: req.body.id,
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
@@ -71,8 +62,8 @@ router.post('/', async (req, res) => {
         res.status(400).end();
 });
 
-router.get('/:id', async (req, res) => {
-    let roomNo = req.params.id;
+router.get('/:roomno', async (req, res) => {
+    let roomNo = req.params.roomno;
     let row = await SendQuery("SELECT * FROM room WHERE roomno=?", roomNo);
     if (row.length != 0) {
         let roomObj = {
@@ -96,13 +87,13 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-router.put('/:id', async (req, res) => {
+router.put('/:roomno', async (req, res) => {
     /*
         UPDATE: /api/rooms/1
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
     */
     let isRide = req.query.isRide;
-    let roomNo = req.params.id;
+    let roomNo = req.params.roomno;
     let userID = GetUserID(req.headers.authorization);
    
     if (isRide != undefined) {            // RIDE IN/OUT
@@ -136,8 +127,8 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
-    if (await SendQuery("DELETE FROM room where roomno=?", req.params.id) != null)
+router.delete('/:roomno', async (req, res) => {
+    if (await SendQuery("DELETE FROM room where roomno=?", req.params.roomno) != null)
         res.status(200).end();
     else
         res.status(400).end();
