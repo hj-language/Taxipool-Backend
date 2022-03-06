@@ -4,7 +4,7 @@ const SendQuery = require('../conn.js').SendQuery;
 const GetUserID = require('./jwt.js').GetUserID;
 
 router.get('/:roomno', async (req, res) => {
-    let comments = await SendQuery("SELECT * FROM comment WHERE roomno=?", req.params.roomno);
+    let comments = await SendQuery("SELECT * FROM comment WHERE roomno=? ORDER BY writetime ASC", req.params.roomno);
     res.status(comments != null ? 200 : 400).send(comments);
 });
 
