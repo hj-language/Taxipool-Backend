@@ -84,8 +84,8 @@ router.post('/', async (req, res) => {
         createtime: new Date()
     };
     let flag = true;
-    await pool.getConnection(async (err, conn) => {
-        if (!err) {
+    await pool.getConnection(async (connerr, conn) => {
+        if (!connerr) {
             try {
                 await conn.beginTransaction();
                 await conn.query("INSERT INTO room SET ?", roomObj, (connerr, connres) => {
@@ -98,12 +98,14 @@ router.post('/', async (req, res) => {
                 console.log(err);
                 await conn.rollback();
                 flag = false;
+                return res.status(400).send(err);
             } finally {
                 conn.release();
             }
         }
         else {
-            console.log(err)
+            console.log(connerr);
+            return res.status(400).send(connerr);
         }
         
     });
@@ -157,19 +159,26 @@ router.put('/:roomno', async (req, res) => {
             if (roomInfo == null || roomInfo.length == 0 || roomInfo[0].currentmember >= roomInfo[0].totalmember)
                 return res.status(400).end();
 
-            await pool.getConnection(async (err, conn) => {
-                try {
-                    await conn.beginTransaction(); // 트랜잭션으로 roomInfo에 유저 추가 + room에 인원 증가 처리
-                    await conn.query("INSERT INTO roominfo SET ?", roomInfoObj);
-                    await conn.query("UPDATE room SET currentmember=currentmember+1 WHERE roomno=?", roomNo);
-                    await conn.commit();
-                } catch (err) {
-                    console.log(err);
-                    await conn.rollback();
-                    return res.status(400).end();
-                } finally {
-                    conn.release();
-                    return res.status(200).end();
+            await pool.getConnection(async (connerr, conn) => {
+                if (!connerr) {
+                    try {
+                        await conn.beginTransaction(); // 트랜잭션으로 roomInfo에 유저 추가 + room에 인원 증가 처리
+                        await conn.query("INSERT INTO roominfo SET ?", roomInfoObj);
+                        await conn.query("UPDATE room SET currentmember=currentmember+1 WHERE roomno=?", roomNo);
+                        await conn.commit();
+                    } catch (err) {
+                        console.log(err);
+                        await conn.rollback();
+                        return res.status(400).send(err);
+                        // return res.status(400).end();
+                    } finally {
+                        conn.release();
+                        return res.status(200).end();
+                    }
+                }
+                else {
+                    console.log(connerr);
+                    return res.status(400).send(connerr);
                 }
             });
         }
@@ -179,11 +188,11 @@ router.put('/:roomno', async (req, res) => {
                 return res.status(400).end();
 
             // 1명 남은 상황이면 방 삭제
-            if (roomInfo[0].currentmember == 1)
+            if (roomInfo[0].currentmember === 1)
                 return res.status(DeleteRoom(roomNo) ? 200 : 400).end();
             
             // 방장이 내리는 상황이면 가장 빨리 탄 사람에게 방장 넘겨주기
-            if (roomInfo[0].leaderid == userID) {
+            if (roomInfo[0].leaderid === userID) {
                 let users = await SendQuery("SELECT user FROM roominfo WHERE roomno=? ORDER BY ridetime ASC;", roomNo);
                 return res.status(RideOut(roomNo, userID, users[0].user) ? 200 : 400).end();
             }
@@ -193,6 +202,12 @@ router.put('/:roomno', async (req, res) => {
     }
 
     else {                                // UPDATE
+
+        let roomInfo = await SendQuery("SELECT roomname FROM room WHERE roomno=?", roomNo);
+        // 해당 방이 없는 경우 방지
+        if (roomInfo == null || roomInfo.length == 0)
+            return res.status(400).end();
+
         let query = "UPDATE room SET "
             + "roomname=?, startpoint=?, endpoint=?, starttime=?, currentmember=?, totalmember=? " 
             + "where roomno=?";
