@@ -78,27 +78,36 @@ router.post('/', async (req, res) => {
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
-        starttime: req.body.starttime,
+        starttime: new Date(),
         currentmember: req.body.currentmember,
         totalmember: req.body.totalmember,
         createtime: new Date()
     };
+    let flag = true;
     await pool.getConnection(async (err, conn) => {
-        try {
-            await conn.beginTransaction();
-            await conn.query("INSERT INTO room SET ?", roomObj, async (err, res) => {
-                await conn.query("INSERT INTO roominfo VALUES (?, ?, ?)", [res.insertId, roomObj.leaderid, new Date()]);
-            });
-            await conn.commit();
-        } catch (err) {
-            console.log(err);
-            await conn.rollback();
-            return res.status(400).end();
-        } finally {
-            conn.release();
-            return res.status(200).end();
+        if (!err) {
+            try {
+                await conn.beginTransaction();
+                await conn.query("INSERT INTO room SET ?", roomObj, (connerr, connres) => {
+                    console.log(connerr, connres);
+                    conn.query("INSERT INTO roominfo VALUES (?, ?, ?)", [connres.insertId, roomObj.leaderid, new Date()], async () => {
+                        await conn.commit();
+                    });
+                });
+            } catch (err) {
+                console.log(err);
+                await conn.rollback();
+                flag = false;
+            } finally {
+                conn.release();
+            }
         }
+        else {
+            console.log(err)
+        }
+        
     });
+    res.status(flag ? 200 : 400).end();
 });
 
 router.get('/:roomno', async (req, res) => {
