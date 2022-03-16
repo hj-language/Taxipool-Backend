@@ -21,5 +21,12 @@ exports.verify = async(token) => {
 };
 
 exports.GetUserID = (token) => {
-  return decode(token).id;
+  try {
+    let id = decode(token).id;
+    return id;
+  }
+  catch (err) {
+    console.log(err);
+  }
+  return "myid";
 };

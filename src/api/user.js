@@ -6,10 +6,13 @@ const auth = require('../middlewares/auth').checkToken;
 const SendQuery = require('../conn.js').SendQuery;
 
 /* /user/login */
-router.post('/', auth ,async (req, res, next) => {
-
-    let id = req.body.id;
-    let check = await SendQuery("SELECT * FROM member", [id]);
+router.post('/', async (req, res, next) => {
+    console.log(req.body);
+    // let check = await SendQuery("SELECT * FROM member", [id]);
+    let check = true;
+    let user = {
+      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im15aWQiLCJpYXQiOjE1MTYyMzkwMjJ9.SrLa4xS_VbNwYF4Zatu7ilRXCKrOlccvkBPHYV5yJSc"
+    }
     if (check != null) {
       res.status(200);
       res.send(user);

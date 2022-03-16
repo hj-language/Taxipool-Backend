@@ -117,7 +117,7 @@ router.get('/:roomno', async (req, res) => {
     let row = await SendQuery("SELECT * FROM room WHERE roomno=?", roomNo);
     if (row.length != 0) {
         let roomObj = {
-            leaderid: row[0].leaderid,
+            leaderid: row[0].leaderid === GetUserID(req.headers.authorization),
             roomname: row[0].roomname,
             startpoint: row[0].startpoint,
             endpoint: row[0].endpoint,
@@ -142,6 +142,7 @@ router.put('/:roomno', async (req, res) => {
         UPDATE: /api/rooms/1
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
     */
+   console.log(req.body);
     let isRide = req.query.isRide;
     let roomNo = req.params.roomno;
     let userID = GetUserID(req.headers.authorization);
