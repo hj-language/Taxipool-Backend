@@ -1,18 +1,22 @@
 const express = require('express');
 const router = express.Router();
 
-const jwt = require('jsonwebtoken');
+const jwt = require('../api/jwt');
 const auth = require('../middlewares/auth').checkToken;
 const SendQuery = require('../conn.js').SendQuery;
 
 /* /user/login */
 router.post('/', async (req, res, next) => {
     console.log(req.body);
-    // let check = await SendQuery("SELECT * FROM member", [id]);
-    let check = true;
-    let user = {
-      token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im15aWQiLCJpYXQiOjE1MTYyMzkwMjJ9.SrLa4xS_VbNwYF4Zatu7ilRXCKrOlccvkBPHYV5yJSc"
-    }
+    let check = await SendQuery("SELECT * FROM member", [id]);
+    
+    // let user = {
+    //   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im15aWQiLCJpYXQiOjE1MTYyMzkwMjJ9.SrLa4xS_VbNwYF4Zatu7ilRXCKrOlccvkBPHYV5yJSc"
+    // }
+    let userInfo = {id : req.body.id, name : req.body.name };
+    let user =  { token: jwt.sign(userInfo) };
+    console.log(token);
+
     if (check != null) {
       res.status(200);
       res.send(user);
@@ -25,9 +29,6 @@ router.post('/', async (req, res, next) => {
 
 /* /user/logout */
 router.delete('/sessions', async (req, res, next) => {
-
-    let id = req.body.id;
-    
     res.send();
 });
 

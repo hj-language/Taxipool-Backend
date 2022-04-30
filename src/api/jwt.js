@@ -30,3 +30,18 @@ exports.GetUserID = (token) => {
   }
   return "myid";
 };
+
+expors.sign = async(userInfo) => {
+  var option = 
+  {
+    expiresIn: '1d',
+    issur: 'taxipool_admin',
+    subject: 'userInfo'
+  };
+
+  jwt.sign(userInfo, secretKey, option, function(err, token) {
+    if (err) console.log(err);
+    else resolve(token);
+  });
+
+};
