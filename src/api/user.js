@@ -4,11 +4,34 @@ const router = express.Router();
 const jwt = require('../api/jwt');
 const auth = require('../middlewares/auth').checkToken;
 const SendQuery = require('../conn.js').SendQuery;
+const crypto = require('crypto');
+
+async function makeHashedPassword(pw) {
+    const salt = crypto.randomBytes(128).toString('base64');
+    const hashedPassword = crypto.pbkdf2(
+      pw, salt, 100000, 64, 'sha512', (err, key) => {
+        if (err)
+          console.log(err);
+      }
+    )
+
+    return { salt: salt, password: hashedPassword.toString('base64')};
+}
+
+async function verifyPassword(pw, hasedPW) {
+  if (pw == hasedPW) {
+    return true;
+  }
+  return false;
+}
+
+async function getHasedPW() {
+  
+}
 
 /* /user/login */
 router.post('/', async (req, res, next) => {
     console.log(req.body);
-    let check = await SendQuery("SELECT * FROM member", [id]);
     
     // let user = {
     //   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im15aWQiLCJpYXQiOjE1MTYyMzkwMjJ9.SrLa4xS_VbNwYF4Zatu7ilRXCKrOlccvkBPHYV5yJSc"
@@ -18,6 +41,7 @@ router.post('/', async (req, res, next) => {
     console.log(token);
 
     if (check != null) {
+      if (verifyPassword(req.body.password, ))
       res.status(200);
       res.send(user);
     }
@@ -29,6 +53,7 @@ router.post('/', async (req, res, next) => {
 
 /* /user/logout */
 router.delete('/sessions', async (req, res, next) => {
+  //토큰 유효성 확인
     res.send();
 });
 
@@ -36,9 +61,11 @@ router.delete('/sessions', async (req, res, next) => {
 /* /user/signup */
 router.post('/member', async (req, res, next) => {
 
+    let password = (await makeHashedPassword(req.body.password)).password;
+
     let userobj = {
       id: req.body.id,
-      password: req.body.password,
+      password: password,
       name: req.body.name,
       phonenumber: req.body.phonenumber,
       nickname: req.body.nickname

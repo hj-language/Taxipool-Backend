@@ -19,6 +19,11 @@ $ npm start
 ```
 </br>
 
+<비밀번호 암호화>
+```
+$ npm install pbkdf2-password
+```
+
 | Method | Path | Function | Implement |
 |--------|-------------|-----------------|---|
 | GET | / | test | O |
