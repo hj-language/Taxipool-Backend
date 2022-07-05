@@ -31,7 +31,7 @@ exports.GetUserID = (token) => {
   return "myid";
 };
 
-expors.sign = async(userInfo) => {
+exports.sign = async(userInfo) => {
   var option = 
   {
     expiresIn: '1d',
