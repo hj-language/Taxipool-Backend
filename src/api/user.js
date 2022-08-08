@@ -38,9 +38,8 @@ router.post('/session', async (req, res) => {
 /* /user/logout */
 router.delete('/session', async (req, res) => {
   //토큰 유효성 확인
-    res.send();
+  res.send();
 });
-
 
 /* /user/signup */
 router.post('/member', async (req, res) => {

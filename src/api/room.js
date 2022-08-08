@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const SendQuery = require('../conn.js').SendQuery;
-const GetUserID = require('./jwt.js').GetUserID;
+const jwt = require('./jwt.js');
 const pool = require('../conn.js').pool;
 
 async function IsRide(roomno, id) {
@@ -62,13 +62,13 @@ router.get('/', async (req, res) => {
         if (rooms != null)
             result = true;
    }
-
+   
    return result? res.status(200).send(rooms) : res.status(400).end;
 });
 
-router.post('/', async (req, res) => {
+router.post('/', jwt.verify, async (req, res) => {
     let roomObj = {
-        leaderid: GetUserID(req.headers.authorization),
+        leaderid: jwt.GetUserID(req.headers.authorization),
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
@@ -111,7 +111,7 @@ router.get('/:roomno', async (req, res) => {
     let row = await SendQuery("SELECT * FROM room WHERE roomno=?", roomNo);
     if (row.length != 0) {
         let roomObj = {
-            leaderid: row[0].leaderid === GetUserID(req.headers.authorization),
+            leaderid: row[0].leaderid === jwt.GetUserID(req.headers.authorization),
             roomname: row[0].roomname,
             startpoint: row[0].startpoint,
             endpoint: row[0].endpoint,
@@ -122,7 +122,7 @@ router.get('/:roomno', async (req, res) => {
         };
         res.status(200).send({
             room: roomObj,
-            isRide: await IsRide(roomNo, GetUserID(req.headers.authorization))
+            isRide: await IsRide(roomNo, jwt.GetUserID(req.headers.authorization))
         });
     }
     else {
@@ -138,7 +138,7 @@ router.put('/:roomno', async (req, res) => {
    console.log(req.body);
     let isRide = req.query.isRide;
     let roomNo = req.params.roomno;
-    let userID = GetUserID(req.headers.authorization);
+    let userID = jwt.GetUserID(req.headers.authorization);
    
     if (isRide != undefined) {            // RIDE IN/OUT
         if (isRide === "true") {          // RIDE IN

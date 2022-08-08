@@ -1,23 +1,22 @@
 const jwt = require('jsonwebtoken');
 const decode = require('jwt-decode');
 const { jwtSalt } = require('../secret.js');
-const TOKEN_EXPIRED = -3;
-const TOKEN_INVALID = -2;
 
-exports.verify = async(token) => {
-  let decoded;
+exports.verify = async (req, res, next) => {
+  var token = req.headers.authorization.split(' ')[1];
+  if (token == 'null')
+    return res.status(400).json('Empty Token');
+
   try {
-    decoded = jwt.verify(token, secretKey);
+    jwt.verify(token, jwtSalt);
+    next();
   } catch (err) {
-    if (err.message === 'jwt expired') {
-      return TOKEN_EXPIRED;
-    } else if (err.message === 'invalid token') {
-      return TOKEN_INVALID;
-    } else {
-      return TOKEN_INVALID;
-    }
+    console.log(err)
+    if (err.message === 'jwt expired' || err.message === 'invalid token')
+      return res.status(401).send("Invalid Token")
+    else
+      return res.status(500).send("Server Error")
   }
-  return decode;
 };
 
 exports.GetUserID = (token) => {
@@ -39,5 +38,5 @@ exports.sign = (userInfo) => {
     subject: 'taxipool_user'
   };
 
-  return jwt.sign(userInfo, jwtSalt, option);;
+  return jwt.sign(userInfo, jwtSalt, option);
 };
