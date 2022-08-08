@@ -1,123 +1,71 @@
 const express = require('express');
 const router = express.Router();
-
 const jwt = require('../api/jwt');
 const auth = require('../middlewares/auth').checkToken;
 const SendQuery = require('../conn.js').SendQuery;
 const crypto = require('crypto');
+const { pwSalt } = require('../secret');
 
-async function makeHashedPassword(pw) {
-    const salt = crypto.randomBytes(128).toString('base64');
-    const hashedPassword = crypto.pbkdf2(
-      pw, salt, 100000, 64, 'sha512', (err, key) => {
-        if (err)
-          console.log(err);
-      }
-    )
-
-    return { salt: salt, password: hashedPassword.toString('base64')};
+async function verifyPassword(originPw, inputPw) {
+  // originPw: hashed, inputPw: not hashed
+  return (originPw == await getHashedPassword(inputPw))
 }
 
-async function verifyPassword(pw, hasedPW) {
-  if (pw == hasedPW) {
-    return true;
-  }
-  return false;
-}
-
-async function getHasedPW() {
-  
+async function getHashedPassword (pw) {
+  return new Promise(async (res, rej) => {
+    crypto.pbkdf2(pw, pwSalt, 10000, 60, 'sha512', (err, key) => {
+      if (err) rej(err);
+      res(key.toString('base64').slice(0, 60));
+    })
+  })
 }
 
 /* /user/login */
-router.post('/', async (req, res, next) => {
-    console.log(req.body);
-    
-    // let user = {
-    //   token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Im15aWQiLCJpYXQiOjE1MTYyMzkwMjJ9.SrLa4xS_VbNwYF4Zatu7ilRXCKrOlccvkBPHYV5yJSc"
-    // }
-    let userInfo = {id : req.body.id, name : req.body.name };
-    let user =  { token: jwt.sign(userInfo) };
-    console.log(token);
+router.post('/session', async (req, res) => {
+    let password = await SendQuery("SELECT pw FROM user where id=?", req.body.id);
+    if (!password[0] || !await verifyPassword(password[0].pw, req.body.password))
+      return res.status(400).end();
 
-    if (check != null) {
-      if (verifyPassword(req.body.password, ))
-      res.status(200);
-      res.send(user);
-    }
-    else {
-      res.status(400);
-      res.send();
+    try {
+      let token = jwt.sign({ id: req.body.id })
+      res.json({ token: token }).status(200);
+    } catch (e) {
+      console.log(e);
+      res.status(500).end();
     }
 });
 
 /* /user/logout */
-router.delete('/sessions', async (req, res, next) => {
+router.delete('/session', async (req, res) => {
   //토큰 유효성 확인
     res.send();
 });
 
 
 /* /user/signup */
-router.post('/member', async (req, res, next) => {
+router.post('/member', async (req, res) => {
+  let user = await SendQuery('SELECT id, nickname FROM user WHERE id=? OR nickname=?', [req.body.id, req.body.nickname]);
+  if (user.length != 0)
+    return res.status(400).send("exist id or nickname");
+  
+  let password = await getHashedPassword(req.body.pw);
+  req.body.pw = password;
 
-    let password = (await makeHashedPassword(req.body.password)).password;
-
-    let userobj = {
-      id: req.body.id,
-      password: password,
-      name: req.body.name,
-      phonenumber: req.body.phonenumber,
-      nickname: req.body.nickname
-    }
-
-    if (await SendQuery("INSERT INTO member SET ?", userobj))
-      res.status(200);
-    else
-      res.staus(400);
-
-    res.send();
+  return res.status(await SendQuery("INSERT INTO user SET ?", req.body)? 200 : 400).end();
 
 });
 
 //id, nickname 중복확인
-router.get('/members', async (req, res, next) => {
-
-    let query = 'SELECT nickname FROM member WHERE nickname=?';
-    let checkNick = await selectInDB(req.query.nickname, query);
-
-    if (req.query.nickname != null) {
-      if (await SendQuery('SELECT nickname FROM member WHERE nickname=?', [req.query.nickname])) {
-        res.status(200);
-      }
-      else {
-        res.status(400);
-      }
-      res.send(members);
-    }
-    else {
-      if (await SendQuery('SELECT id FROM member WHERE id=?', [req.query.nickname])) {
-        res.status(200);
-      }
-      else {
-        res.status(400);
-      }
-    }
-   
-    res.send();
+router.get('/members', async (req, res) => {
+    let user = await SendQuery('SELECT id, nickname FROM user WHERE id=? OR nickname=?', [req.query.id, req.query.nickname]);
+    if (user.length != 0)
+      return res.status(400).send("exist id or nickname");
+    res.status(200).end();
 });
 
 /* /user/signout */
-router.delete ('/members', async (req, res, next) => {
-
-    if (await SendQuery('DELETE FROM member WHERE id=?', [req.query.id])) {
-      req.status(200);
-    }
-    else {
-      req.status(400);
-    }
-
-    res.send();
+router.delete ('/members', async (req, res) => {
+  res.status(await SendQuery('DELETE FROM user WHERE id=?', req.query.id)? 200 : 400).end();
 });
 
 module.exports = router;

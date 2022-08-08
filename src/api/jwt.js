@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const decode = require('jwt-decode');
-const secretKey = require('../secret.js').secretKey;
+const { jwtSalt } = require('../secret.js');
 const TOKEN_EXPIRED = -3;
 const TOKEN_INVALID = -2;
 
@@ -31,17 +31,13 @@ exports.GetUserID = (token) => {
   return "myid";
 };
 
-exports.sign = async(userInfo) => {
+exports.sign = (userInfo) => {
   var option = 
   {
-    expiresIn: '1d',
-    issur: 'taxipool_admin',
-    subject: 'userInfo'
+    expiresIn: '1h',
+    issuer: 'taxipool_admin',
+    subject: 'taxipool_user'
   };
 
-  jwt.sign(userInfo, secretKey, option, function(err, token) {
-    if (err) console.log(err);
-    else resolve(token);
-  });
-
+  return jwt.sign(userInfo, jwtSalt, option);;
 };

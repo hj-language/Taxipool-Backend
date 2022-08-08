@@ -63,13 +63,7 @@ router.get('/', async (req, res) => {
             result = true;
    }
 
-   if (result) {
-       res.status(200);
-       res.send(rooms);
-   }
-   else {
-       res.status(400).end();
-   }
+   return result? res.status(200).send(rooms) : res.status(400).end;
 });
 
 router.post('/', async (req, res) => {
@@ -126,8 +120,7 @@ router.get('/:roomno', async (req, res) => {
             totalmember: row[0].totalmember,
             createtime: row[0].createtime,
         };
-        res.status(200);
-        res.send({
+        res.status(200).send({
             room: roomObj,
             isRide: await IsRide(roomNo, GetUserID(req.headers.authorization))
         });
