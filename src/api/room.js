@@ -73,7 +73,7 @@ router.post('/', jwt.verify, async (req, res) => {
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
         starttime: new Date(),
-        currentmember: req.body.currentmember,
+        currentmember: 1,
         totalmember: req.body.totalmember,
         createtime: new Date()
     };
