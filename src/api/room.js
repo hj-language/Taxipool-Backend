@@ -62,6 +62,11 @@ router.get('/', async (req, res) => {
         if (rooms != null)
             result = true;
    }
+
+    rooms.forEach((room) => {
+        room.starttime = new Date(room.starttime.getTime() + 9 * 60 * 60 * 1000)
+        room.createtime = new Date(room.createtime.getTime() + 9 * 60 * 60 * 1000) 
+    })
    
    return result? res.status(200).send(rooms) : res.status(400).end;
 });
@@ -72,7 +77,7 @@ router.post('/', jwt.verify, async (req, res) => {
         roomname: req.body.roomname,
         startpoint: req.body.startpoint,
         endpoint: req.body.endpoint,
-        starttime: new Date(),
+        starttime: req.body.starttime,
         currentmember: 1,
         totalmember: req.body.totalmember,
         createtime: new Date()
@@ -112,13 +117,14 @@ router.get('/:roomno', async (req, res) => {
     if (row.length != 0) {
         let roomObj = {
             leaderid: row[0].leaderid === jwt.GetUserID(req.headers.authorization),
+            roomno: row[0].roomno,
             roomname: row[0].roomname,
             startpoint: row[0].startpoint,
             endpoint: row[0].endpoint,
-            starttime: row[0].starttime,
+            starttime: new Date(row[0].starttime.getTime() + 9 * 60 * 60 * 1000),
             currentmember: row[0].currentmember,
             totalmember: row[0].totalmember,
-            createtime: row[0].createtime,
+            createtime: new Date(row[0].createtime.getTime() + 9 * 60 * 60 * 1000),
         };
         res.status(200).send({
             room: roomObj,
@@ -135,7 +141,6 @@ router.put('/:roomno', async (req, res) => {
         UPDATE: /api/rooms/1
         RIDE IN/OUT: /api/rooms/1?isRide=true or false
     */
-   console.log(req.body);
     let isRide = req.query.isRide;
     let roomNo = req.params.roomno;
     let userID = jwt.GetUserID(req.headers.authorization);
@@ -148,7 +153,7 @@ router.put('/:roomno', async (req, res) => {
                 ridetime: new Date()
             };
             let roomInfo = await SendQuery("SELECT currentmember, totalmember FROM room WHERE roomno=?", roomNo);
-
+            console.log(roomInfo)
             // 해당 방이 없거나, 인원이 초과될 경우 방지
             if (roomInfo == null || roomInfo.length == 0 || roomInfo[0].currentmember >= roomInfo[0].totalmember)
                 return res.status(400).end();
@@ -198,6 +203,7 @@ router.put('/:roomno', async (req, res) => {
     else {                                // UPDATE
 
         let roomInfo = await SendQuery("SELECT roomname FROM room WHERE roomno=?", roomNo);
+        console.log(roomInfo)
         // 해당 방이 없는 경우 방지
         if (roomInfo == null || roomInfo.length == 0)
             return res.status(400).end();
