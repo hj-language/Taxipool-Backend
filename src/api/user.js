@@ -55,7 +55,7 @@ router.post('/member', async (req, res) => {
 });
 
 //id, nickname 중복확인
-router.get('/members', async (req, res) => {
+router.get('/member', async (req, res) => {
     let user = await SendQuery('SELECT id, nickname FROM user WHERE id=? OR nickname=?', [req.query.id, req.query.nickname]);
     if (user.length != 0)
       return res.status(400).send("exist id or nickname");
@@ -63,7 +63,7 @@ router.get('/members', async (req, res) => {
 });
 
 /* /user/signout */
-router.delete ('/members', async (req, res) => {
+router.delete('/member', async (req, res) => {
   res.status(await SendQuery('DELETE FROM user WHERE id=?', req.query.id)? 200 : 400).end();
 });
 
