@@ -16,14 +16,20 @@ async function RideOut(roomno, id, alterid) {
     await pool.getConnection(async (err, conn) => {
         try {
             await conn.beginTransaction();
-            
+            console.log(alterid)
+            if (alterid)
+                console.log(alterid)
             // alterid가 defined면 해당 방의 leaderid를 alterid로 변경
-            if (alterid != undefined)
+            if (alterid) {
                 await conn.query("UPDATE room SET leaderid=? WHERE roomno=?;", [alterid, roomno]);
-            
-            await conn.query("DELETE FROM roominfo WHERE roomno=? AND user=?;", [roomno, id]);
-            await conn.query("UPDATE room SET currentmember=currentmember-1 WHERE roomno=?", roomno);
-            await conn.commit();
+                await conn.query("DELETE FROM roominfo WHERE roomno=? AND user=?;", [roomno, id]);
+                await conn.query("UPDATE room SET currentmember=currentmember-1 WHERE roomno=?", roomno);
+                await conn.commit();
+            } else {
+                await conn.query("DELETE FROM roominfo WHERE roomno=? AND user=?;", [roomno, id]);
+                await conn.query("UPDATE room SET currentmember=currentmember-1 WHERE roomno=?", roomno);
+                await conn.commit();        
+            }
         } catch (err) {
             console.log(err);
             await conn.rollback();
@@ -191,6 +197,7 @@ router.put('/:roomno', async (req, res) => {
                 return res.status(DeleteRoom(roomNo) ? 200 : 400).end();
             
             // 방장이 내리는 상황이면 가장 빨리 탄 사람에게 방장 넘겨주기
+            console.log(roomInfo[0].leaderid === userID)
             if (roomInfo[0].leaderid === userID) {
                 let users = await SendQuery("SELECT user FROM roominfo WHERE roomno=? ORDER BY ridetime ASC;", roomNo);
                 return res.status(RideOut(roomNo, userID, users[0].user) ? 200 : 400).end();

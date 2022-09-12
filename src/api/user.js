@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const jwt = require('../api/jwt');
-const auth = require('../middlewares/auth').checkToken;
+const jwt = require('./jwt.js');
 const SendQuery = require('../conn.js').SendQuery;
 const crypto = require('crypto');
 const { pwSalt } = require('../secret');
@@ -56,6 +55,7 @@ router.post('/member', async (req, res) => {
 
 //id, nickname 중복확인
 router.get('/member', async (req, res) => {
+  console.log(req.query.id, req.query.nickname)
     let user = await SendQuery('SELECT id, nickname FROM user WHERE id=? OR nickname=?', [req.query.id, req.query.nickname]);
     if (user.length != 0)
       return res.status(400).send("exist id or nickname");
@@ -63,8 +63,15 @@ router.get('/member', async (req, res) => {
 });
 
 /* /user/signout */
-router.delete('/member', async (req, res) => {
-  res.status(await SendQuery('DELETE FROM user WHERE id=?', req.query.id)? 200 : 400).end();
+router.delete('/member', jwt.verify, async (req, res) => {
+  console.log(jwt.GetUserID(req.headers.authorization))
+  let id = jwt.GetUserID(req.headers.authorization);
+  let user = await SendQuery('SELECT pw FROM user WHERE id=?', id);
+  console.log(user)
+  if (user[0].pw == req.body.pw)
+    res.status(await SendQuery('DELETE FROM user WHERE id=?', id)? 200 : 400).end();
+  else
+    res.status(400).end();
 });
 
 module.exports = router;
